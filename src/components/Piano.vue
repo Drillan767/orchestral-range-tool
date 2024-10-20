@@ -1,51 +1,40 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { watch } from 'vue'
 import PianoKeys from '../assets/pianoKeys.json'
-
-type Preset = 'unison' | 'solo' | 'low'
 
 const labels = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8']
 
-defineEmits<{
-    (e: 'update:note', value: string): void
-    (e: 'update:preset', value: Preset): void
-}>()
+// Automatically receives the value from the parent component's v-model, 
+// and defines it as an array of strings.
+// Also, it handles updating the new value to the parent automatically.
+const keys = defineModel<string[]>({ required: true })
 
-const preset = ref<Preset>('unison')
-const notes = ref<string[]>([])
+// Triggers each time a key is pressed.
+watch(keys, (value) => {
+    if (value.length <= 2) return
+    // If there's more than 3 values inside of keys, we remove the first one.
+    value.shift()
+    // And update keys with the result.
+    keys.value = value
+})
 
 </script>
 
 <template>
-    {{ notes }}
-    <div id="select" class="text-center mb-4">
-        <label>
-            <input type="radio" value="unison" v-model="preset" />
-            Unison and Octave Doubling
-        </label>
-        <label>
-            <input type="radio" value="solo" v-model="preset" />
-            Solo Writing
-        </label>
-        <label>
-            <input type="radio" value="low" v-model="preset" />
-            Low and Very Low Registers
-        </label>
-    </div>
     <div id="piano">
         <label
             v-for="(key, i) in PianoKeys"
             :key="i"
-            :class="{ [key.type]: true, 'active': notes.includes(key.note) }"
+            :class="{ [key.type]: true, 'active': keys.includes(key.note) }"
         >
             <input
-                v-model="notes"
+                v-model="keys"
                 :value="key.note"
                 type="checkbox"
             />
 
-            <span>
-                {{ labels.includes(key.note) ? key.note : '' }}
+            <span v-if="labels.includes(key.note)">
+                {{ key.note }}
             </span>
         </label>
     </div>
@@ -53,7 +42,7 @@ const notes = ref<string[]>([])
 
 <style lang="css" scoped>
 #piano {
-    height: 20em;
+    height: 12em;
     border-radius: 1em;
     position: relative;
 }

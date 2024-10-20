@@ -1,5 +1,20 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+import { noteToMidiNumber } from './utils/orchestralMethods'
 import Piano from './components/Piano.vue'
+import Results from './components/Results.vue'
+
+type Preset = 'unison' | 'solo' | 'low'
+
+const preset = ref<Preset>('unison')
+
+const selectedNotes = ref<string[]>([])
+
+const sortedSelectedNotes = computed(() => {
+    // Notes are ordered by midi value.
+    return [...selectedNotes.value].sort((a, b) => noteToMidiNumber(a) - noteToMidiNumber(b))
+})
+
 </script>
 
 <template>
@@ -22,7 +37,31 @@ import Piano from './components/Piano.vue'
     </div>
 
     <div class="flex flex-col items-center">
-        <Piano />
+        <div id="select" class="text-center mb-4">
+            <label>
+                <input type="radio" value="unison" v-model="preset" />
+                Unison and Octave Doubling
+            </label>
+            <label>
+                <input type="radio" value="solo" v-model="preset" />
+                Solo Writing
+            </label>
+            <label>
+                <input type="radio" value="low" v-model="preset" />
+                Low and Very Low Registers
+            </label>
+        </div>
+
+        <Piano v-model="selectedNotes" />
+        <p>
+            Selected notes: {{ sortedSelectedNotes.length > 0 ? sortedSelectedNotes.join(', ') : 'None selected' }}.
+        </p>
     </div>
+
+    <Results
+        v-if="sortedSelectedNotes.length === 2"
+        :notes="sortedSelectedNotes"
+        :preset
+    />
 
 </template>
